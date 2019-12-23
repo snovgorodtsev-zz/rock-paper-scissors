@@ -20,7 +20,7 @@ object Game extends App {
     computer1Sign <- drawRandomSign
     computer2Sign <- drawRandomSign
     _ <- putStrLn(computerVsComputerSignsTxt(computer1Sign, computer2Sign))
-    _ <- computer1Sign.compare(computer2Sign) match {
+    _ <- computer1Sign.challenge(computer2Sign) match {
       case Result.Win => putStrLn(winsTxt(Computer1Txt))
       case Result.Fail => putStrLn(winsTxt(Computer2Txt))
       case Result.Draw => putStrLn(DrawTxt) *> computerVsComputerGame
@@ -36,7 +36,7 @@ object Game extends App {
         for {
           computerSign <- drawRandomSign
           _ <- putStrLn(playerVsComputerSignsTxt(playerSign, computerSign))
-          _ <- playerSign.compare(computerSign) match {
+          _ <- playerSign.challenge(computerSign) match {
             case Result.Fail => putStrLn(winsTxt(ComputerTxt))
             case Result.Win => putStrLn(winsTxt(PlayerTxt))
             case Result.Draw => putStrLn(DrawTxt) *> playerVsComputerGame

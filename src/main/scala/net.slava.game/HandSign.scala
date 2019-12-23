@@ -1,12 +1,24 @@
 package net.slava.game
 
+sealed trait Result
+
+object Result {
+
+  object Win extends Result
+
+  object Fail extends Result
+
+  object Draw extends Result
+
+}
+
 /**
  * Feel free to add more signs if necessary...
  */
 sealed trait HandSign {
   def name: String
 
-  def compare(that: HandSign): Result
+  def challenge(that: HandSign): Result
 }
 
 object HandSign {
@@ -14,7 +26,7 @@ object HandSign {
   object Rock extends HandSign {
     override def name: String = "Rock"
 
-    override def compare(that: HandSign): Result = that match {
+    override def challenge(that: HandSign): Result = that match {
       case Rock => Result.Draw
       case Paper => Result.Fail
       case Scissors => Result.Win
@@ -24,7 +36,7 @@ object HandSign {
   object Paper extends HandSign {
     override def name: String = "Paper"
 
-    override def compare(that: HandSign): Result = that match {
+    override def challenge(that: HandSign): Result = that match {
       case Rock => Result.Win
       case Paper => Result.Draw
       case Scissors => Result.Fail
@@ -34,7 +46,7 @@ object HandSign {
   object Scissors extends HandSign {
     override def name: String = "Scissors"
 
-    override def compare(that: HandSign): Result = that match {
+    override def challenge(that: HandSign): Result = that match {
       case Rock => Result.Fail
       case Paper => Result.Win
       case Scissors => Result.Draw
