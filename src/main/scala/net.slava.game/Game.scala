@@ -2,7 +2,7 @@ package net.slava.game
 
 import java.io.IOException
 
-import net.slava.game.Texts._
+import net.slava.game.Text._
 import zio.console._
 import zio.random.Random
 import zio.{App, URIO, ZIO, random}
@@ -13,50 +13,55 @@ object Game extends App {
 
   private type Env = Console with Random
 
-  def run(args: List[String]): URIO[Env, Int] = gameMenu.fold(_ => 1, _ => 0)
+  private def drawRandomSign = random.nextInt(HandSign.Values.size).map(HandSign.Values(_))
 
-  private val computerVsComputer: ZIO[Env, IOException, Unit] = for {
-    _ <- putStrLn("Computers are drawing hand signs...")
-    sign1 <- drawSign
-    sign2 <- drawSign
-    _ <- putStrLn(s"computer1 hand sign is ${sign1.name}, computer2 hand sign is ${sign2.name}!!!")
-    _ <- sign1.compare(sign2) match {
-      case Result.Win => putStrLn("computer1 wins!")
-      case Result.Fail => putStrLn("computer2 wins!")
-      case Result.Draw => putStrLn("It's a draw, a replay needed.") *> computerVsComputer
+  val computerVsComputerGame: ZIO[Env, IOException, Unit] = for {
+    _ <- putStrLn(ComputersAreDrawingTxt)
+    computer1Sign <- drawRandomSign
+    computer2Sign <- drawRandomSign
+    _ <- putStrLn(computerVsComputerSignsTxt(computer1Sign, computer2Sign))
+    _ <- computer1Sign.compare(computer2Sign) match {
+      case Result.Win => putStrLn(winsTxt(Computer1Txt))
+      case Result.Fail => putStrLn(winsTxt(Computer2Txt))
+      case Result.Draw => putStrLn(DrawTxt) *> computerVsComputerGame
     }
   } yield ()
 
-  private val playerVsComputer: ZIO[Env, IOException, Unit] = for {
-    _ <- putStrLn("Please, draw a hand sign. Enter \"1\" for Rock, \"2\" for Paper or \"3\" for Scissors.")
+  val playerVsComputerGame: ZIO[Env, IOException, Unit] = for {
+    _ <- putStrLn(DrawSignTxt)
     n <- getStrLn
     _ <- Try(n.toInt).toOption.flatMap(HandSign.Values.get) match {
-      case None => putStrLn("Incorrect hand sign selection") *> playerVsComputer
-      case Some(sign) =>
+      case None => putStrLn(IncorrectSelectionTxt) *> playerVsComputerGame
+      case Some(playerSign) =>
         for {
-          computerSign <- drawSign
-          _ <- putStrLn(s"computer hand sign is ${computerSign.name}, player hand sign is ${sign.name}!!!")
-          _ <- sign.compare(computerSign) match {
-            case Result.Fail => putStrLn("Computer wins!")
-            case Result.Win => putStrLn("Player wins!")
-            case Result.Draw => putStrLn("It's a draw, a replay needed.") *> playerVsComputer
+          computerSign <- drawRandomSign
+          _ <- putStrLn(playerVsComputerSignsTxt(playerSign, computerSign))
+          _ <- playerSign.compare(computerSign) match {
+            case Result.Fail => putStrLn(winsTxt(ComputerTxt))
+            case Result.Win => putStrLn(winsTxt(PlayerTxt))
+            case Result.Draw => putStrLn(DrawTxt) *> playerVsComputerGame
           }
         } yield ()
     }
   } yield ()
 
-  private val gameMenu: ZIO[Env, IOException, Unit] = for {
-    _ <- putStrLn(introStr)
-    number <- getStrLn
-    _ <- number match {
-      case "1" => playerVsComputer *> gameMenu
-      case "2" => putStrLn("Computer vs computer game starts") *> computerVsComputer *> gameMenu
-      case "x" =>
-        putStrLn(byeStr)
-      case x => putStrLn(s"You could choose either 1 or 2, but you chose $x, please try again") *> gameMenu
-    }
-  } yield ()
+  def gameMenu(
+                playerVsComputer: ZIO[Env, IOException, Unit],
+                computerVsComputer: ZIO[Env, IOException, Unit]
+              ): ZIO[Env, IOException, Unit] =
+    for {
+      _ <- putStrLn(IntroTxt)
+      number <- getStrLn
+      menu = gameMenu(playerVsComputer, computerVsComputer)
+      _ <- number match {
+        case "0" => playerVsComputer *> menu
+        case "1" => computerVsComputer *> menu
+        case "x" => putStrLn(ByeTxt)
+        case c => putStrLn(wrongMenuChoiceTxt(c)) *> menu
+      }
+    } yield ()
 
-  private def drawSign = random.nextInt(HandSign.Values.size).map(HandSign.Values(_))
+  def run(args: List[String]): URIO[Env, Int] =
+    gameMenu(playerVsComputerGame, computerVsComputerGame).fold(_ => 1, _ => 0)
 
 }

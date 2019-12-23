@@ -1,5 +1,8 @@
 package net.slava.game
 
+/**
+ * Feel free to add more signs if necessary...
+ */
 sealed trait HandSign {
   def name: String
 
@@ -38,6 +41,7 @@ object HandSign {
     }
   }
 
+  // Map of available hand signs. Should be kept in an up-to-date state.
   val Values: Map[Int, HandSign] =
     List(HandSign.Rock, HandSign.Paper, HandSign.Scissors).zipWithIndex.map(e => e._2 -> e._1).toMap
 
